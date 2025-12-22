@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, requirePermission } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 import {
   createTemplateSchema,
   updateTemplateSchema,
@@ -11,9 +11,10 @@ import {
   updateLocalizationSchema,
   createTenantOverrideSchema,
   updateTenantOverrideSchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Create notification template
 router.post('/', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
@@ -85,7 +86,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 // Get template by ID
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const template = await prisma.notificationTemplate.findUnique({
       where: { id },
@@ -138,7 +139,7 @@ router.get('/slug/:slug', requireAuth, async (req: Request, res: Response) => {
 // Update template
 router.put('/:id', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
     const data = updateTemplateSchema.parse(req.body);
 
     const template = await prisma.notificationTemplate.update({
@@ -159,7 +160,7 @@ router.put('/:id', requireAuth, requirePermission('admin', 'notifications:write'
 // Delete template
 router.delete('/:id', requireAuth, requirePermission('admin', 'notifications:delete'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     await prisma.notificationTemplate.delete({
       where: { id },
@@ -175,7 +176,7 @@ router.delete('/:id', requireAuth, requirePermission('admin', 'notifications:del
 // Activate template
 router.post('/:id/activate', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const template = await prisma.notificationTemplate.update({
       where: { id },
@@ -195,7 +196,7 @@ router.post('/:id/activate', requireAuth, requirePermission('admin', 'notificati
 // Archive template
 router.post('/:id/archive', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const template = await prisma.notificationTemplate.update({
       where: { id },
@@ -219,7 +220,7 @@ router.post('/:id/archive', requireAuth, requirePermission('admin', 'notificatio
 // Create new version
 router.post('/:id/versions', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(req.params.id!);
     const data = createTemplateVersionSchema.parse(req.body);
 
     // Get current max version
@@ -252,7 +253,7 @@ router.post('/:id/versions', requireAuth, requirePermission('admin', 'notificati
 // List versions
 router.get('/:id/versions', requireAuth, async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(req.params.id!);
 
     const versions = await prisma.templateVersion.findMany({
       where: { templateId },
@@ -269,7 +270,7 @@ router.get('/:id/versions', requireAuth, async (req: Request, res: Response) => 
 // Get specific version
 router.get('/:id/versions/:versionId', requireAuth, async (req: Request, res: Response) => {
   try {
-    const versionId = parseInt(req.params.versionId);
+    const versionId = parseInt(req.params.versionId!);
 
     const version = await prisma.templateVersion.findUnique({
       where: { id: versionId },
@@ -290,7 +291,7 @@ router.get('/:id/versions/:versionId', requireAuth, async (req: Request, res: Re
 // Submit version for approval
 router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const versionId = parseInt(req.params.versionId);
+    const versionId = parseInt(req.params.versionId!);
 
     const version = await prisma.templateVersion.update({
       where: { id: versionId },
@@ -312,7 +313,7 @@ router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('a
 // Approve version
 router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const versionId = parseInt(req.params.versionId);
+    const versionId = parseInt(req.params.versionId!);
 
     const version = await prisma.templateVersion.update({
       where: { id: versionId },
@@ -334,7 +335,7 @@ router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('
 // Reject version
 router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const versionId = parseInt(req.params.versionId);
+    const versionId = parseInt(req.params.versionId!);
     const { rejectionReason } = rejectVersionSchema.parse(req.body);
 
     const version = await prisma.templateVersion.update({
@@ -358,8 +359,8 @@ router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('a
 // Activate version
 router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const versionId = parseInt(req.params.versionId);
+    const templateId = parseInt(req.params.id!);
+    const versionId = parseInt(req.params.versionId!);
 
     // Deprecate currently active version
     await prisma.templateVersion.updateMany({
@@ -404,7 +405,7 @@ router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission(
 // Add localization
 router.post('/:id/localizations', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(req.params.id!);
     const data = createLocalizationSchema.parse(req.body);
 
     const localization = await prisma.templateLocalization.create({
@@ -426,7 +427,7 @@ router.post('/:id/localizations', requireAuth, requirePermission('admin', 'notif
 // List localizations
 router.get('/:id/localizations', requireAuth, async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(req.params.id!);
 
     const localizations = await prisma.templateLocalization.findMany({
       where: { templateId },
@@ -442,8 +443,8 @@ router.get('/:id/localizations', requireAuth, async (req: Request, res: Response
 // Update localization
 router.put('/:id/localizations/:locale', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const { locale } = req.params;
+    const templateId = parseInt(req.params.id!);
+    const locale = req.params.locale!;
     const data = updateLocalizationSchema.parse(req.body);
 
     const localization = await prisma.templateLocalization.update({
@@ -466,8 +467,8 @@ router.put('/:id/localizations/:locale', requireAuth, requirePermission('admin',
 // Delete localization
 router.delete('/:id/localizations/:locale', requireAuth, requirePermission('admin', 'notifications:delete'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const { locale } = req.params;
+    const templateId = parseInt(req.params.id!);
+    const locale = req.params.locale!;
 
     await prisma.templateLocalization.delete({
       where: {
@@ -489,7 +490,7 @@ router.delete('/:id/localizations/:locale', requireAuth, requirePermission('admi
 // Add tenant override
 router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(req.params.id!);
     const data = createTenantOverrideSchema.parse(req.body);
 
     const override = await prisma.templateTenantOverride.create({
@@ -511,7 +512,7 @@ router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (re
 // List tenant overrides
 router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(req.params.id!);
 
     const overrides = await prisma.templateTenantOverride.findMany({
       where: { templateId },
@@ -527,8 +528,8 @@ router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req
 // Update tenant override
 router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const { siteId } = req.params;
+    const templateId = parseInt(req.params.id!);
+    const siteId = req.params.siteId!;
     const data = updateTenantOverrideSchema.parse(req.body);
 
     const override = await prisma.templateTenantOverride.update({
@@ -551,8 +552,8 @@ router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), as
 // Delete tenant override
 router.delete('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const templateId = parseInt(req.params.id);
-    const { siteId } = req.params;
+    const templateId = parseInt(req.params.id!);
+    const siteId = req.params.siteId!;
 
     await prisma.templateTenantOverride.delete({
       where: {

@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth } from '../middleware/auth.js';
 import {
   createInAppNotificationSchema,
   inAppQuerySchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Create in-app notification
 router.post('/', requireAuth, async (req: Request, res: Response) => {
@@ -115,7 +116,7 @@ router.get('/:userId/unread-count', requireAuth, async (req: Request, res: Respo
 // Mark as read
 router.post('/:id/read', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const notification = await prisma.inAppNotification.findUnique({
       where: { id },
@@ -151,7 +152,7 @@ router.post('/:id/read', requireAuth, async (req: Request, res: Response) => {
 // Dismiss notification
 router.post('/:id/dismiss', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const notification = await prisma.inAppNotification.findUnique({
       where: { id },

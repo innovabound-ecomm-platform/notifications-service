@@ -1,15 +1,16 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
 import { randomBytes } from 'crypto';
-import { requireAuth, requirePermission } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 import {
   createWebhookSchema,
   updateWebhookSchema,
   webhookQuerySchema,
   webhookDeliveryQuerySchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Generate webhook secret
 const generateSecret = (): string => {
@@ -101,7 +102,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 // Get webhook by ID
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const webhook = await prisma.webhookEndpoint.findUnique({
       where: { id },
@@ -128,7 +129,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 // Update webhook
 router.put('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
     const data = updateWebhookSchema.parse(req.body);
 
     const webhook = await prisma.webhookEndpoint.findUnique({
@@ -168,7 +169,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
 // Delete webhook
 router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const webhook = await prisma.webhookEndpoint.findUnique({
       where: { id },
@@ -199,7 +200,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
 // Regenerate webhook secret
 router.post('/:id/regenerate-secret', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const webhook = await prisma.webhookEndpoint.findUnique({
       where: { id },
@@ -234,7 +235,7 @@ router.post('/:id/regenerate-secret', requireAuth, async (req: Request, res: Res
 // Test webhook
 router.post('/:id/test', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const webhook = await prisma.webhookEndpoint.findUnique({
       where: { id },
@@ -307,7 +308,7 @@ router.post('/:id/test', requireAuth, async (req: Request, res: Response) => {
 // Get delivery history
 router.get('/:id/deliveries', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
     const query = webhookDeliveryQuerySchema.parse(req.query);
     const { page, limit, status } = query;
 
@@ -357,7 +358,7 @@ router.get('/:id/deliveries', requireAuth, async (req: Request, res: Response) =
 // Retry delivery
 router.post('/deliveries/:deliveryId/retry', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
   try {
-    const deliveryId = parseInt(req.params.deliveryId);
+    const deliveryId = parseInt(req.params.deliveryId!);
 
     const delivery = await prisma.webhookDelivery.findUnique({
       where: { id: deliveryId },

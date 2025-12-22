@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, optionalAuth } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import {
   createUnsubscribeSchema,
   updateUnsubscribeSchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Unsubscribe email (can be anonymous for one-click unsubscribe)
 router.post('/', optionalAuth, async (req: Request, res: Response) => {
@@ -60,7 +61,6 @@ router.get('/:email', requireAuth, async (req: Request, res: Response) => {
     }
 
     res.json({
-      email,
       unsubscribed: true,
       ...unsubscribe,
     });

@@ -1,13 +1,14 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth } from '../middleware/auth.js';
 import {
   updatePreferencesSchema,
   updateSinglePreferenceSchema,
   NotificationTypeEnum,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Get user preferences
 router.get('/:userId', requireAuth, async (req: Request, res: Response) => {
@@ -61,12 +62,12 @@ router.put('/:userId', requireAuth, async (req: Request, res: Response) => {
         prisma.notificationPreference.upsert({
           where: {
             userId_notificationType: {
-              userId,
+              userId: userId!,
               notificationType: pref.notificationType,
             },
           },
           create: {
-            userId,
+            userId: userId!,
             notificationType: pref.notificationType,
             emailEnabled: pref.emailEnabled ?? true,
             smsEnabled: pref.smsEnabled ?? false,
@@ -119,12 +120,12 @@ router.put('/:userId/:type', requireAuth, async (req: Request, res: Response) =>
     const preference = await prisma.notificationPreference.upsert({
       where: {
         userId_notificationType: {
-          userId,
+          userId: userId!,
           notificationType: validType.data,
         },
       },
       create: {
-        userId,
+        userId: userId!,
         notificationType: validType.data,
         emailEnabled: data.emailEnabled ?? true,
         smsEnabled: data.smsEnabled ?? false,

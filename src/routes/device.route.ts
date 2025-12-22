@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth } from '../middleware/auth.js';
 import {
   registerDeviceSchema,
   updateDeviceSchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Register push device
 router.post('/', requireAuth, async (req: Request, res: Response) => {
@@ -77,7 +78,7 @@ router.get('/user/:userId', requireAuth, async (req: Request, res: Response) => 
 // Get device by ID
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const device = await prisma.pushDevice.findUnique({
       where: { id },
@@ -104,7 +105,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 // Update device
 router.put('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
     const data = updateDeviceSchema.parse(req.body);
 
     const device = await prisma.pushDevice.findUnique({
@@ -144,7 +145,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
 // Delete device
 router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const device = await prisma.pushDevice.findUnique({
       where: { id },
@@ -175,7 +176,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
 // Activate device
 router.post('/:id/activate', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const device = await prisma.pushDevice.findUnique({
       where: { id },
@@ -211,7 +212,7 @@ router.post('/:id/activate', requireAuth, async (req: Request, res: Response) =>
 // Deactivate device
 router.post('/:id/deactivate', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const device = await prisma.pushDevice.findUnique({
       where: { id },

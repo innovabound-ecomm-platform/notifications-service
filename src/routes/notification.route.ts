@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, requirePermission } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 import {
   createNotificationSchema,
   notificationQuerySchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Create/send notification
 router.post('/', requireAuth, async (req: Request, res: Response) => {
@@ -133,7 +134,7 @@ router.get('/', requireAuth, requirePermission('admin', 'notifications:read'), a
 // Get notification by ID
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const notification = await prisma.notification.findUnique({
       where: { id },
@@ -203,7 +204,7 @@ router.get('/user/:userId', requireAuth, async (req: Request, res: Response) => 
 // Retry failed notification
 router.post('/:id/retry', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const notification = await prisma.notification.findUnique({
       where: { id },
@@ -249,7 +250,7 @@ router.post('/:id/retry', requireAuth, requirePermission('admin', 'notifications
 // Cancel pending notification
 router.post('/:id/cancel', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
 
     const notification = await prisma.notification.findUnique({
       where: { id },
@@ -285,7 +286,7 @@ router.post('/:id/cancel', requireAuth, requirePermission('admin', 'notification
 // Update notification status (internal use for workers)
 router.patch('/:id/status', requireAuth, requirePermission('admin', 'system'), async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id!);
     const { status, errorCode, errorMessage, providerMessageId, provider } = req.body;
 
     const updateData: Record<string, unknown> = {

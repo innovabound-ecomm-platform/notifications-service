@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, requirePermission, optionalAuth } from '../middleware/auth';
+import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
+import { requireAuth, requirePermission, optionalAuth } from '../middleware/auth.js';
 import {
   createEmailEventSchema,
   emailEventQuerySchema,
-} from '../schemas/notification.schema';
+} from '../schemas/notification.schema.js';
 
 const router = Router();
+const prisma = getNotificationsPrisma();
 
 // Record email event (webhook from email provider)
 router.post('/', optionalAuth, async (req: Request, res: Response) => {
@@ -138,7 +139,7 @@ router.get('/message/:messageId', requireAuth, requirePermission('admin', 'notif
 // Get events by notification ID
 router.get('/notification/:notificationId', requireAuth, async (req: Request, res: Response) => {
   try {
-    const notificationId = parseInt(req.params.notificationId);
+    const notificationId = parseInt(req.params.notificationId!);
 
     const notification = await prisma.notification.findUnique({
       where: { id: notificationId },

@@ -2,14 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-import templateRoutes from './routes/template.route';
-import notificationRoutes from './routes/notification.route';
-import preferenceRoutes from './routes/preference.route';
-import inAppRoutes from './routes/in-app.route';
-import deviceRoutes from './routes/device.route';
-import webhookRoutes from './routes/webhook.route';
-import emailEventRoutes from './routes/email-event.route';
-import unsubscribeRoutes from './routes/unsubscribe.route';
+import templateRoutes from './routes/template.route.js';
+import notificationRoutes from './routes/notification.route.js';
+import preferenceRoutes from './routes/preference.route.js';
+import inAppRoutes from './routes/in-app.route.js';
+import deviceRoutes from './routes/device.route.js';
+import webhookRoutes from './routes/webhook.route.js';
+import emailEventRoutes from './routes/email-event.route.js';
+import unsubscribeRoutes from './routes/unsubscribe.route.js';
 
 const app = express();
 const PORT = process.env.PORT || 3012;
