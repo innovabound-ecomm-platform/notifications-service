@@ -12,10 +12,13 @@ import emailEventRoutes from './routes/email-event.route.js';
 import unsubscribeRoutes from './routes/unsubscribe.route.js';
 
 const app = express();
-const PORT = process.env.PORT || 3012;
+const PORT = process.env.PORT || 3011;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:3002", "http://localhost:3003", "http://localhost:3100"],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
