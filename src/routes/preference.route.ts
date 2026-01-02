@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   updatePreferencesSchema,
   updateSinglePreferenceSchema,
@@ -11,12 +11,12 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Get user preferences
-router.get('/:userId', requireAuth, async (req: Request, res: Response) => {
+router.get('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
     // Users can only view their own preferences (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -45,13 +45,13 @@ router.get('/:userId', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Update user preferences (bulk)
-router.put('/:userId', requireAuth, async (req: Request, res: Response) => {
+router.put('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
     const { preferences } = updatePreferencesSchema.parse(req.body);
 
     // Users can only update their own preferences (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -99,13 +99,13 @@ router.put('/:userId', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Update single preference
-router.put('/:userId/:type', requireAuth, async (req: Request, res: Response) => {
+router.put('/:userId/:type', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId, type } = req.params;
     const data = updateSinglePreferenceSchema.parse(req.body);
 
     // Users can only update their own preferences (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -152,12 +152,12 @@ router.put('/:userId/:type', requireAuth, async (req: Request, res: Response) =>
 });
 
 // Delete all preferences for a user
-router.delete('/:userId', requireAuth, async (req: Request, res: Response) => {
+router.delete('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
     // Users can only delete their own preferences (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }

@@ -1,7 +1,7 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
 import { randomBytes } from 'crypto';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { requireAuth, requirePermission, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   createWebhookSchema,
   updateWebhookSchema,
@@ -18,7 +18,7 @@ const generateSecret = (): string => {
 };
 
 // Create webhook endpoint
-router.post('/', requireAuth, async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createWebhookSchema.parse(req.body);
 
@@ -44,7 +44,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // List webhook endpoints
-router.get('/', requireAuth, async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = webhookQuerySchema.parse(req.query);
     const { page, limit, userId, isActive } = query;
@@ -52,7 +52,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     const where: Record<string, unknown> = {};
 
     // Non-admin users can only see their own webhooks
-    if (!req.user!.roles.includes('admin')) {
+    if (!isAdmin(req.user!.roles)) {
       where.userId = req.user!.userId;
     } else if (userId) {
       where.userId = userId;
@@ -100,7 +100,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get webhook by ID
-router.get('/:id', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -114,7 +114,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only view their own webhooks (unless admin)
-    if (webhook.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (webhook.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -127,7 +127,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Update webhook
-router.put('/:id', requireAuth, async (req: Request, res: Response) => {
+router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
     const data = updateWebhookSchema.parse(req.body);
@@ -142,7 +142,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only update their own webhooks (unless admin)
-    if (webhook.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (webhook.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -167,7 +167,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Delete webhook
-router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
+router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -181,7 +181,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only delete their own webhooks (unless admin)
-    if (webhook.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (webhook.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -198,7 +198,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Regenerate webhook secret
-router.post('/:id/regenerate-secret', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/regenerate-secret', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -212,7 +212,7 @@ router.post('/:id/regenerate-secret', requireAuth, async (req: Request, res: Res
     }
 
     // Users can only update their own webhooks (unless admin)
-    if (webhook.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (webhook.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -233,7 +233,7 @@ router.post('/:id/regenerate-secret', requireAuth, async (req: Request, res: Res
 });
 
 // Test webhook
-router.post('/:id/test', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/test', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -247,7 +247,7 @@ router.post('/:id/test', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only test their own webhooks (unless admin)
-    if (webhook.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (webhook.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -306,7 +306,7 @@ router.post('/:id/test', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get delivery history
-router.get('/:id/deliveries', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id/deliveries', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
     const query = webhookDeliveryQuerySchema.parse(req.query);
@@ -322,7 +322,7 @@ router.get('/:id/deliveries', requireAuth, async (req: Request, res: Response) =
     }
 
     // Users can only view their own webhook deliveries (unless admin)
-    if (webhook.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (webhook.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -356,7 +356,7 @@ router.get('/:id/deliveries', requireAuth, async (req: Request, res: Response) =
 });
 
 // Retry delivery
-router.post('/deliveries/:deliveryId/retry', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.post('/deliveries/:deliveryId/retry', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const deliveryId = parseInt(req.params.deliveryId!);
 

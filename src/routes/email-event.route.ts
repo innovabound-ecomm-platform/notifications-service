@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, requirePermission, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, requirePermission, optionalAuth, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   createEmailEventSchema,
   emailEventQuerySchema,
@@ -10,7 +10,7 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Record email event (webhook from email provider)
-router.post('/', optionalAuth, async (req: Request, res: Response) => {
+router.post('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createEmailEventSchema.parse(req.body);
 
@@ -85,7 +85,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
 });
 
 // List email events
-router.get('/', requireAuth, requirePermission('admin', 'notifications:read'), async (req: Request, res: Response) => {
+router.get('/', requireAuth, requirePermission('notifications:read'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = emailEventQuerySchema.parse(req.query);
     const { page, limit, email, eventType } = query;
@@ -120,7 +120,7 @@ router.get('/', requireAuth, requirePermission('admin', 'notifications:read'), a
 });
 
 // Get events by message ID
-router.get('/message/:messageId', requireAuth, requirePermission('admin', 'notifications:read'), async (req: Request, res: Response) => {
+router.get('/message/:messageId', requireAuth, requirePermission('notifications:read'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { messageId } = req.params;
 
@@ -137,7 +137,7 @@ router.get('/message/:messageId', requireAuth, requirePermission('admin', 'notif
 });
 
 // Get events by notification ID
-router.get('/notification/:notificationId', requireAuth, async (req: Request, res: Response) => {
+router.get('/notification/:notificationId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const notificationId = parseInt(req.params.notificationId!);
 
@@ -151,7 +151,7 @@ router.get('/notification/:notificationId', requireAuth, async (req: Request, re
     }
 
     // Users can only view events for their own notifications (unless admin)
-    if (notification.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (notification.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -169,7 +169,7 @@ router.get('/notification/:notificationId', requireAuth, async (req: Request, re
 });
 
 // Get email statistics
-router.get('/stats', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.get('/stats', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { startDate, endDate } = req.query;
 

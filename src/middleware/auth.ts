@@ -4,6 +4,7 @@ import { createRemoteJWKSet, jwtVerify, errors, JWTPayload } from "jose";
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
+    userId: string; // Alias for id - used by some routes
     email?: string;
     roles?: string[];
     permissions?: string[];
@@ -89,6 +90,7 @@ export const requireAuth = async (
   if (userId) {
     req.user = {
       id: userId,
+      userId: userId,
       email: userEmail,
       roles: userRoles ? userRoles.split(",") : [],
     };
@@ -103,6 +105,7 @@ export const requireAuth = async (
     if (payload) {
       req.user = {
         id: payload.sub,
+        userId: payload.sub,
         email: payload.email,
         roles: payload.roles,
         permissions: payload.permissions,
@@ -121,6 +124,7 @@ export const requireAuth = async (
     if (payload) {
       req.user = {
         id: payload.sub,
+        userId: payload.sub,
         email: payload.email,
         roles: payload.roles,
         permissions: payload.permissions,
@@ -165,6 +169,16 @@ export const requirePermission = (permission: string) => {
   };
 };
 
+// Admin roles for case-insensitive comparison
+const ADMIN_ROLES = ['admin', 'ADMIN', 'SUPER_ADMIN', 'STAFF'];
+
+/**
+ * Check if user has admin role (case-insensitive)
+ */
+export const isAdmin = (roles?: string[]): boolean => {
+  return roles?.some(role => ADMIN_ROLES.includes(role)) ?? false;
+};
+
 /**
  * Middleware to require admin role
  */
@@ -175,7 +189,7 @@ export const requireAdmin = (
 ) => {
   const userRoles = req.user?.roles || [];
 
-  if (userRoles.some(role => ["ADMIN", "SUPER_ADMIN", "STAFF", "admin"].includes(role))) {
+  if (isAdmin(userRoles)) {
     return next();
   }
 
@@ -198,6 +212,7 @@ export const optionalAuth = async (
   if (userId) {
     req.user = {
       id: userId,
+      userId: userId,
       email: userEmail,
       roles: userRoles ? userRoles.split(",") : [],
     };
@@ -212,6 +227,7 @@ export const optionalAuth = async (
     if (payload) {
       req.user = {
         id: payload.sub,
+        userId: payload.sub,
         email: payload.email,
         roles: payload.roles,
         permissions: payload.permissions,
@@ -230,6 +246,7 @@ export const optionalAuth = async (
     if (payload) {
       req.user = {
         id: payload.sub,
+        userId: payload.sub,
         email: payload.email,
         roles: payload.roles,
         permissions: payload.permissions,

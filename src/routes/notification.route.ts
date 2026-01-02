@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { requireAuth, requirePermission, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   createNotificationSchema,
   notificationQuerySchema,
@@ -10,7 +10,7 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Create/send notification
-router.post('/', requireAuth, async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createNotificationSchema.parse(req.body);
 
@@ -93,7 +93,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // List notifications
-router.get('/', requireAuth, requirePermission('admin', 'notifications:read'), async (req: Request, res: Response) => {
+router.get('/', requireAuth, requirePermission('notifications:read'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = notificationQuerySchema.parse(req.query);
     const { page, limit, status, notificationType, channel, userId, orderId, correlationId } = query;
@@ -132,7 +132,7 @@ router.get('/', requireAuth, requirePermission('admin', 'notifications:read'), a
 });
 
 // Get notification by ID
-router.get('/:id', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -146,7 +146,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only view their own notifications (unless admin)
-    if (notification.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (notification.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -159,14 +159,14 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get user's notifications
-router.get('/user/:userId', requireAuth, async (req: Request, res: Response) => {
+router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
     const query = notificationQuerySchema.parse(req.query);
     const { page, limit, status, notificationType, channel } = query;
 
     // Users can only view their own notifications (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -202,7 +202,7 @@ router.get('/user/:userId', requireAuth, async (req: Request, res: Response) => 
 });
 
 // Retry failed notification
-router.post('/:id/retry', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/retry', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -248,7 +248,7 @@ router.post('/:id/retry', requireAuth, requirePermission('admin', 'notifications
 });
 
 // Cancel pending notification
-router.post('/:id/cancel', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/cancel', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -284,7 +284,7 @@ router.post('/:id/cancel', requireAuth, requirePermission('admin', 'notification
 });
 
 // Update notification status (internal use for workers)
-router.patch('/:id/status', requireAuth, requirePermission('admin', 'system'), async (req: Request, res: Response) => {
+router.patch('/:id/status', requireAuth, requirePermission('system'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
     const { status, errorCode, errorMessage, providerMessageId, provider } = req.body;
@@ -320,7 +320,7 @@ router.patch('/:id/status', requireAuth, requirePermission('admin', 'system'), a
 });
 
 // Bulk send notifications
-router.post('/bulk', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/bulk', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { notifications } = req.body;
 

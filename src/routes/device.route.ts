@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   registerDeviceSchema,
   updateDeviceSchema,
@@ -10,12 +10,12 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Register push device
-router.post('/', requireAuth, async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = registerDeviceSchema.parse(req.body);
 
     // Users can only register devices for themselves (unless admin)
-    if (data.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (data.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -53,12 +53,12 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get user's devices
-router.get('/user/:userId', requireAuth, async (req: Request, res: Response) => {
+router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
     // Users can only view their own devices (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -76,7 +76,7 @@ router.get('/user/:userId', requireAuth, async (req: Request, res: Response) => 
 });
 
 // Get device by ID
-router.get('/:id', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -90,7 +90,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only view their own devices (unless admin)
-    if (device.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (device.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -103,7 +103,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Update device
-router.put('/:id', requireAuth, async (req: Request, res: Response) => {
+router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
     const data = updateDeviceSchema.parse(req.body);
@@ -118,7 +118,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only update their own devices (unless admin)
-    if (device.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (device.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -143,7 +143,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Delete device
-router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
+router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -157,7 +157,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only delete their own devices (unless admin)
-    if (device.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (device.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -174,7 +174,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Activate device
-router.post('/:id/activate', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/activate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -188,7 +188,7 @@ router.post('/:id/activate', requireAuth, async (req: Request, res: Response) =>
     }
 
     // Users can only activate their own devices (unless admin)
-    if (device.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (device.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -210,7 +210,7 @@ router.post('/:id/activate', requireAuth, async (req: Request, res: Response) =>
 });
 
 // Deactivate device
-router.post('/:id/deactivate', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/deactivate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -224,7 +224,7 @@ router.post('/:id/deactivate', requireAuth, async (req: Request, res: Response) 
     }
 
     // Users can only deactivate their own devices (unless admin)
-    if (device.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (device.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -245,7 +245,7 @@ router.post('/:id/deactivate', requireAuth, async (req: Request, res: Response) 
 });
 
 // Delete by token (useful for logout)
-router.delete('/token/:token', requireAuth, async (req: Request, res: Response) => {
+router.delete('/token/:token', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { token } = req.params;
 
@@ -259,7 +259,7 @@ router.delete('/token/:token', requireAuth, async (req: Request, res: Response) 
     }
 
     // Users can only delete their own devices (unless admin)
-    if (device.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (device.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }

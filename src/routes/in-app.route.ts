@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   createInAppNotificationSchema,
   inAppQuerySchema,
@@ -10,7 +10,7 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Create in-app notification
-router.post('/', requireAuth, async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createInAppNotificationSchema.parse(req.body);
 
@@ -34,14 +34,14 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get user's in-app notifications
-router.get('/:userId', requireAuth, async (req: Request, res: Response) => {
+router.get('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
     const query = inAppQuerySchema.parse(req.query);
     const { page, limit, read, notificationType } = query;
 
     // Users can only view their own notifications (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -84,12 +84,12 @@ router.get('/:userId', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get unread count
-router.get('/:userId/unread-count', requireAuth, async (req: Request, res: Response) => {
+router.get('/:userId/unread-count', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
     // Users can only view their own notifications (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -114,7 +114,7 @@ router.get('/:userId/unread-count', requireAuth, async (req: Request, res: Respo
 });
 
 // Mark as read
-router.post('/:id/read', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/read', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -128,7 +128,7 @@ router.post('/:id/read', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Users can only update their own notifications (unless admin)
-    if (notification.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (notification.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -150,7 +150,7 @@ router.post('/:id/read', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Dismiss notification
-router.post('/:id/dismiss', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/dismiss', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -164,7 +164,7 @@ router.post('/:id/dismiss', requireAuth, async (req: Request, res: Response) => 
     }
 
     // Users can only update their own notifications (unless admin)
-    if (notification.userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (notification.userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -186,12 +186,12 @@ router.post('/:id/dismiss', requireAuth, async (req: Request, res: Response) => 
 });
 
 // Mark all as read
-router.post('/:userId/read-all', requireAuth, async (req: Request, res: Response) => {
+router.post('/:userId/read-all', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
     // Users can only update their own notifications (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -215,12 +215,12 @@ router.post('/:userId/read-all', requireAuth, async (req: Request, res: Response
 });
 
 // Dismiss all
-router.post('/:userId/dismiss-all', requireAuth, async (req: Request, res: Response) => {
+router.post('/:userId/dismiss-all', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
     // Users can only update their own notifications (unless admin)
-    if (userId !== req.user!.userId && !req.user!.roles.includes('admin')) {
+    if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Access denied' });
       return;
     }
@@ -244,9 +244,9 @@ router.post('/:userId/dismiss-all', requireAuth, async (req: Request, res: Respo
 });
 
 // Delete old notifications (admin cleanup)
-router.delete('/cleanup', requireAuth, async (req: Request, res: Response) => {
+router.delete('/cleanup', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    if (!req.user!.roles.includes('admin')) {
+    if (!isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Admin access required' });
       return;
     }

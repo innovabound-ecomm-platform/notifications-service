@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth, isAdmin, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   createUnsubscribeSchema,
   updateUnsubscribeSchema,
@@ -10,7 +10,7 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Unsubscribe email (can be anonymous for one-click unsubscribe)
-router.post('/', optionalAuth, async (req: Request, res: Response) => {
+router.post('/', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createUnsubscribeSchema.parse(req.body);
 
@@ -42,7 +42,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
 });
 
 // Check unsubscribe status
-router.get('/:email', requireAuth, async (req: Request, res: Response) => {
+router.get('/:email', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { email } = req.params;
 
@@ -71,7 +71,7 @@ router.get('/:email', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Update unsubscribe
-router.put('/:email', requireAuth, async (req: Request, res: Response) => {
+router.put('/:email', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { email } = req.params;
     const data = updateUnsubscribeSchema.parse(req.body);
@@ -96,7 +96,7 @@ router.put('/:email', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Resubscribe (delete unsubscribe)
-router.delete('/:email', requireAuth, async (req: Request, res: Response) => {
+router.delete('/:email', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { email } = req.params;
 
@@ -112,7 +112,7 @@ router.delete('/:email', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Bulk check unsubscribe status
-router.post('/check', requireAuth, async (req: Request, res: Response) => {
+router.post('/check', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { emails } = req.body;
 
@@ -150,7 +150,7 @@ router.post('/check', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Check if email can receive specific notification type
-router.get('/:email/can-send/:type', requireAuth, async (req: Request, res: Response) => {
+router.get('/:email/can-send/:type', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { email, type } = req.params;
 
@@ -181,9 +181,9 @@ router.get('/:email/can-send/:type', requireAuth, async (req: Request, res: Resp
 });
 
 // List all unsubscribes (admin)
-router.get('/', requireAuth, async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    if (!req.user!.roles.includes('admin')) {
+    if (!isAdmin(req.user!.roles)) {
       res.status(403).json({ error: 'Admin access required' });
       return;
     }

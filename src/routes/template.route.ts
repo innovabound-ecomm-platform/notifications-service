@@ -1,6 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { getNotificationsPrisma } from '@innovabound-ecomm-platform/notifications-db';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { requireAuth, requirePermission, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   createTemplateSchema,
   updateTemplateSchema,
@@ -17,7 +17,7 @@ const router = Router();
 const prisma = getNotificationsPrisma();
 
 // Create notification template
-router.post('/', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createTemplateSchema.parse(req.body);
 
@@ -41,7 +41,7 @@ router.post('/', requireAuth, requirePermission('admin', 'notifications:write'),
 });
 
 // List templates
-router.get('/', requireAuth, async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = templateQuerySchema.parse(req.query);
     const { page, limit, status, notificationType, channel, search } = query;
@@ -84,7 +84,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get template by ID
-router.get('/:id', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -113,7 +113,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Get template by slug
-router.get('/slug/:slug', requireAuth, async (req: Request, res: Response) => {
+router.get('/slug/:slug', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { slug } = req.params;
 
@@ -137,7 +137,7 @@ router.get('/slug/:slug', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Update template
-router.put('/:id', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.put('/:id', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
     const data = updateTemplateSchema.parse(req.body);
@@ -158,7 +158,7 @@ router.put('/:id', requireAuth, requirePermission('admin', 'notifications:write'
 });
 
 // Delete template
-router.delete('/:id', requireAuth, requirePermission('admin', 'notifications:delete'), async (req: Request, res: Response) => {
+router.delete('/:id', requireAuth, requirePermission('notifications:delete'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -174,7 +174,7 @@ router.delete('/:id', requireAuth, requirePermission('admin', 'notifications:del
 });
 
 // Activate template
-router.post('/:id/activate', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/activate', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -194,7 +194,7 @@ router.post('/:id/activate', requireAuth, requirePermission('admin', 'notificati
 });
 
 // Archive template
-router.post('/:id/archive', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/archive', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
 
@@ -218,7 +218,7 @@ router.post('/:id/archive', requireAuth, requirePermission('admin', 'notificatio
 // =====================
 
 // Create new version
-router.post('/:id/versions', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/versions', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const data = createTemplateVersionSchema.parse(req.body);
@@ -251,7 +251,7 @@ router.post('/:id/versions', requireAuth, requirePermission('admin', 'notificati
 });
 
 // List versions
-router.get('/:id/versions', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id/versions', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
 
@@ -268,7 +268,7 @@ router.get('/:id/versions', requireAuth, async (req: Request, res: Response) => 
 });
 
 // Get specific version
-router.get('/:id/versions/:versionId', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id/versions/:versionId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
 
@@ -289,7 +289,7 @@ router.get('/:id/versions/:versionId', requireAuth, async (req: Request, res: Re
 });
 
 // Submit version for approval
-router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
 
@@ -311,7 +311,7 @@ router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('a
 });
 
 // Approve version
-router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
 
@@ -333,7 +333,7 @@ router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('
 });
 
 // Reject version
-router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
     const { rejectionReason } = rejectVersionSchema.parse(req.body);
@@ -357,7 +357,7 @@ router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('a
 });
 
 // Activate version
-router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const versionId = parseInt(req.params.versionId!);
@@ -403,7 +403,7 @@ router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission(
 // =====================
 
 // Add localization
-router.post('/:id/localizations', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.post('/:id/localizations', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const data = createLocalizationSchema.parse(req.body);
@@ -425,7 +425,7 @@ router.post('/:id/localizations', requireAuth, requirePermission('admin', 'notif
 });
 
 // List localizations
-router.get('/:id/localizations', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id/localizations', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
 
@@ -441,7 +441,7 @@ router.get('/:id/localizations', requireAuth, async (req: Request, res: Response
 });
 
 // Update localization
-router.put('/:id/localizations/:locale', requireAuth, requirePermission('admin', 'notifications:write'), async (req: Request, res: Response) => {
+router.put('/:id/localizations/:locale', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const locale = req.params.locale!;
@@ -465,7 +465,7 @@ router.put('/:id/localizations/:locale', requireAuth, requirePermission('admin',
 });
 
 // Delete localization
-router.delete('/:id/localizations/:locale', requireAuth, requirePermission('admin', 'notifications:delete'), async (req: Request, res: Response) => {
+router.delete('/:id/localizations/:locale', requireAuth, requirePermission('notifications:delete'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const locale = req.params.locale!;
@@ -488,7 +488,7 @@ router.delete('/:id/localizations/:locale', requireAuth, requirePermission('admi
 // =====================
 
 // Add tenant override
-router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const data = createTenantOverrideSchema.parse(req.body);
@@ -510,7 +510,7 @@ router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (re
 });
 
 // List tenant overrides
-router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
 
@@ -526,7 +526,7 @@ router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req
 });
 
 // Update tenant override
-router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const siteId = req.params.siteId!;
@@ -550,7 +550,7 @@ router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), as
 });
 
 // Delete tenant override
-router.delete('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: Request, res: Response) => {
+router.delete('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
     const siteId = req.params.siteId!;
