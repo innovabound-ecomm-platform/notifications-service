@@ -6,7 +6,7 @@ import {
   updateUnsubscribeSchema,
 } from '../schemas/notification.schema.js';
 
-const router = Router();
+const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
 // Unsubscribe email (can be anonymous for one-click unsubscribe)

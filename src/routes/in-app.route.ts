@@ -6,7 +6,7 @@ import {
   inAppQuerySchema,
 } from '../schemas/notification.schema.js';
 
-const router = Router();
+const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
 // Create in-app notification

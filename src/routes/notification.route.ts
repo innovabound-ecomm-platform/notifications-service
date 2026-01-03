@@ -6,7 +6,7 @@ import {
   notificationQuerySchema,
 } from '../schemas/notification.schema.js';
 
-const router = Router();
+const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
 // Create/send notification

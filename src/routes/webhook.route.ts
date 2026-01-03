@@ -9,7 +9,7 @@ import {
   webhookDeliveryQuerySchema,
 } from '../schemas/notification.schema.js';
 
-const router = Router();
+const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
 // Generate webhook secret
