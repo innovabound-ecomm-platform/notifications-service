@@ -10,7 +10,34 @@ import {
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
-// Get user preferences
+/**
+ * @openapi
+ * /preferences/{userId}:
+ *   get:
+ *     summary: Get user preferences
+ *     description: Get notification preferences for a user (users can only view their own unless admin)
+ *     tags:
+ *       - Preferences
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User preferences with defaults for missing types
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to get preferences
+ */
 router.get('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -44,7 +71,62 @@ router.get('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Respo
   }
 });
 
-// Update user preferences (bulk)
+/**
+ * @openapi
+ * /preferences/{userId}:
+ *   put:
+ *     summary: Update preferences (bulk)
+ *     description: Update multiple notification preferences at once
+ *     tags:
+ *       - Preferences
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - preferences
+ *             properties:
+ *               preferences:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - notificationType
+ *                   properties:
+ *                     notificationType:
+ *                       type: string
+ *                     emailEnabled:
+ *                       type: boolean
+ *                     smsEnabled:
+ *                       type: boolean
+ *                     pushEnabled:
+ *                       type: boolean
+ *                     inAppEnabled:
+ *                       type: boolean
+ *     responses:
+ *       200:
+ *         description: Preferences updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to update preferences
+ */
 router.put('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -98,7 +180,57 @@ router.put('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Respo
   }
 });
 
-// Update single preference
+/**
+ * @openapi
+ * /preferences/{userId}/{type}:
+ *   put:
+ *     summary: Update single preference
+ *     description: Update notification preference for a specific notification type
+ *     tags:
+ *       - Preferences
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Notification type (e.g., ORDER_CONFIRMATION)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               emailEnabled:
+ *                 type: boolean
+ *               smsEnabled:
+ *                 type: boolean
+ *               pushEnabled:
+ *                 type: boolean
+ *               inAppEnabled:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Preference updated successfully
+ *       400:
+ *         description: Validation error or invalid notification type
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to update preference
+ */
 router.put('/:userId/:type', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId, type } = req.params;
@@ -151,7 +283,34 @@ router.put('/:userId/:type', requireAuth, async (req: AuthenticatedRequest, res:
   }
 });
 
-// Delete all preferences for a user
+/**
+ * @openapi
+ * /preferences/{userId}:
+ *   delete:
+ *     summary: Delete all preferences
+ *     description: Delete all notification preferences for a user (resets to defaults)
+ *     tags:
+ *       - Preferences
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       204:
+ *         description: Preferences deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to delete preferences
+ */
 router.delete('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;

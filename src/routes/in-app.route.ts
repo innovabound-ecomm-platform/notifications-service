@@ -9,7 +9,58 @@ import {
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
-// Create in-app notification
+/**
+ * @openapi
+ * /in-app:
+ *   post:
+ *     summary: Create in-app notification
+ *     description: Create a new in-app notification for a user
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - notificationType
+ *               - title
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               notificationType:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               actionUrl:
+ *                 type: string
+ *               actionLabel:
+ *                 type: string
+ *               icon:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, NORMAL, HIGH]
+ *               expiresAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: In-app notification created
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to create in-app notification
+ */
 router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createInAppNotificationSchema.parse(req.body);
@@ -33,7 +84,51 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
   }
 });
 
-// Get user's in-app notifications
+/**
+ * @openapi
+ * /in-app/{userId}:
+ *   get:
+ *     summary: Get user's in-app notifications
+ *     description: Get paginated in-app notifications for a user
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: read
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: notificationType
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of in-app notifications
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to get in-app notifications
+ */
 router.get('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -83,7 +178,33 @@ router.get('/:userId', requireAuth, async (req: AuthenticatedRequest, res: Respo
   }
 });
 
-// Get unread count
+/**
+ * @openapi
+ * /in-app/{userId}/unread-count:
+ *   get:
+ *     summary: Get unread count
+ *     description: Get count of unread in-app notifications for a user
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Unread notification count
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to get unread count
+ */
 router.get('/:userId/unread-count', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -113,7 +234,35 @@ router.get('/:userId/unread-count', requireAuth, async (req: AuthenticatedReques
   }
 });
 
-// Mark as read
+/**
+ * @openapi
+ * /in-app/{id}/read:
+ *   post:
+ *     summary: Mark as read
+ *     description: Mark an in-app notification as read
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification marked as read
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Notification not found
+ *       500:
+ *         description: Failed to mark as read
+ */
 router.post('/:id/read', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -149,7 +298,35 @@ router.post('/:id/read', requireAuth, async (req: AuthenticatedRequest, res: Res
   }
 });
 
-// Dismiss notification
+/**
+ * @openapi
+ * /in-app/{id}/dismiss:
+ *   post:
+ *     summary: Dismiss notification
+ *     description: Dismiss an in-app notification
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification dismissed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Notification not found
+ *       500:
+ *         description: Failed to dismiss notification
+ */
 router.post('/:id/dismiss', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -185,7 +362,33 @@ router.post('/:id/dismiss', requireAuth, async (req: AuthenticatedRequest, res: 
   }
 });
 
-// Mark all as read
+/**
+ * @openapi
+ * /in-app/{userId}/read-all:
+ *   post:
+ *     summary: Mark all as read
+ *     description: Mark all unread in-app notifications as read for a user
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: All notifications marked as read
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to mark all as read
+ */
 router.post('/:userId/read-all', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -214,7 +417,33 @@ router.post('/:userId/read-all', requireAuth, async (req: AuthenticatedRequest, 
   }
 });
 
-// Dismiss all
+/**
+ * @openapi
+ * /in-app/{userId}/dismiss-all:
+ *   post:
+ *     summary: Dismiss all notifications
+ *     description: Dismiss all in-app notifications for a user
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: All notifications dismissed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Failed to dismiss all
+ */
 router.post('/:userId/dismiss-all', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -243,7 +472,34 @@ router.post('/:userId/dismiss-all', requireAuth, async (req: AuthenticatedReques
   }
 });
 
-// Delete old notifications (admin cleanup)
+/**
+ * @openapi
+ * /in-app/cleanup:
+ *   delete:
+ *     summary: Cleanup old notifications
+ *     description: Delete expired and old dismissed notifications (admin only)
+ *     tags:
+ *       - In-App Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: daysOld
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: Delete dismissed notifications older than this many days
+ *     responses:
+ *       200:
+ *         description: Cleanup completed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       500:
+ *         description: Failed to clean up notifications
+ */
 router.delete('/cleanup', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!isAdmin(req.user!.roles)) {

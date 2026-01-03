@@ -17,7 +17,51 @@ const generateSecret = (): string => {
   return randomBytes(32).toString('hex');
 };
 
-// Create webhook endpoint
+/**
+ * @openapi
+ * /webhooks:
+ *   post:
+ *     summary: Create webhook endpoint
+ *     description: Register a new webhook endpoint for receiving notification events
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - url
+ *               - subscribedEvents
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               url:
+ *                 type: string
+ *                 format: uri
+ *               description:
+ *                 type: string
+ *               subscribedEvents:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isActive:
+ *                 type: boolean
+ *                 default: true
+ *     responses:
+ *       201:
+ *         description: Webhook created successfully (includes generated secret)
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to create webhook
+ */
 router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createWebhookSchema.parse(req.body);
@@ -43,7 +87,44 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
   }
 });
 
-// List webhook endpoints
+/**
+ * @openapi
+ * /webhooks:
+ *   get:
+ *     summary: List webhook endpoints
+ *     description: Get all webhook endpoints (non-admin users only see their own)
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: List of webhooks (secret not included)
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to list webhooks
+ */
 router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = webhookQuerySchema.parse(req.query);
@@ -99,7 +180,35 @@ router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =>
   }
 });
 
-// Get webhook by ID
+/**
+ * @openapi
+ * /webhooks/{id}:
+ *   get:
+ *     summary: Get webhook by ID
+ *     description: Get details of a specific webhook endpoint (includes secret)
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Webhook details
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Webhook not found
+ *       500:
+ *         description: Failed to get webhook
+ */
 router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -126,7 +235,54 @@ router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Update webhook
+/**
+ * @openapi
+ * /webhooks/{id}:
+ *   put:
+ *     summary: Update webhook
+ *     description: Update webhook endpoint configuration
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               url:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               subscribedEvents:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Webhook updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Webhook not found
+ *       500:
+ *         description: Failed to update webhook
+ */
 router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -166,7 +322,35 @@ router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Delete webhook
+/**
+ * @openapi
+ * /webhooks/{id}:
+ *   delete:
+ *     summary: Delete webhook
+ *     description: Remove a webhook endpoint
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: Webhook deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Webhook not found
+ *       500:
+ *         description: Failed to delete webhook
+ */
 router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -197,7 +381,35 @@ router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res: Respon
   }
 });
 
-// Regenerate webhook secret
+/**
+ * @openapi
+ * /webhooks/{id}/regenerate-secret:
+ *   post:
+ *     summary: Regenerate webhook secret
+ *     description: Generate a new secret for webhook signature verification
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Secret regenerated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Webhook not found
+ *       500:
+ *         description: Failed to regenerate secret
+ */
 router.post('/:id/regenerate-secret', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -232,7 +444,35 @@ router.post('/:id/regenerate-secret', requireAuth, async (req: AuthenticatedRequ
   }
 });
 
-// Test webhook
+/**
+ * @openapi
+ * /webhooks/{id}/test:
+ *   post:
+ *     summary: Test webhook
+ *     description: Send a test delivery to verify webhook endpoint
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Test webhook sent successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Webhook not found
+ *       500:
+ *         description: Failed to test webhook
+ */
 router.post('/:id/test', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -305,7 +545,50 @@ router.post('/:id/test', requireAuth, async (req: AuthenticatedRequest, res: Res
   }
 });
 
-// Get delivery history
+/**
+ * @openapi
+ * /webhooks/{id}/deliveries:
+ *   get:
+ *     summary: Get delivery history
+ *     description: Get webhook delivery history with filtering
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, SENT, FAILED]
+ *     responses:
+ *       200:
+ *         description: List of deliveries
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Webhook not found
+ *       500:
+ *         description: Failed to get deliveries
+ */
 router.get('/:id/deliveries', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -355,7 +638,37 @@ router.get('/:id/deliveries', requireAuth, async (req: AuthenticatedRequest, res
   }
 });
 
-// Retry delivery
+/**
+ * @openapi
+ * /webhooks/deliveries/{deliveryId}/retry:
+ *   post:
+ *     summary: Retry delivery
+ *     description: Retry a failed webhook delivery (requires admin permission)
+ *     tags:
+ *       - Webhooks
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: deliveryId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Delivery queued for retry
+ *       400:
+ *         description: Only failed deliveries can be retried
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: Delivery not found
+ *       500:
+ *         description: Failed to retry delivery
+ */
 router.post('/deliveries/:deliveryId/retry', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const deliveryId = parseInt(req.params.deliveryId!);

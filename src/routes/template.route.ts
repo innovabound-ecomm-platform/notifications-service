@@ -16,7 +16,51 @@ import {
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
-// Create notification template
+/**
+ * @openapi
+ * /templates:
+ *   post:
+ *     summary: Create notification template
+ *     description: Create a new notification template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - slug
+ *               - notificationType
+ *               - channel
+ *             properties:
+ *               name:
+ *                 type: string
+ *               slug:
+ *                 type: string
+ *               notificationType:
+ *                 type: string
+ *               channel:
+ *                 type: string
+ *               template:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Template created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Failed to create template
+ */
 router.post('/', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createTemplateSchema.parse(req.body);
@@ -40,7 +84,52 @@ router.post('/', requireAuth, requirePermission('notifications:write'), async (r
   }
 });
 
-// List templates
+/**
+ * @openapi
+ * /templates:
+ *   get:
+ *     summary: List templates
+ *     description: Get a paginated list of notification templates
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: notificationType
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: channel
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of templates
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to list templates
+ */
 router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = templateQuerySchema.parse(req.query);
@@ -83,7 +172,34 @@ router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =>
   }
 });
 
-// Get template by ID
+/**
+ * @openapi
+ * /templates/{id}:
+ *   get:
+ *     summary: Get template by ID
+ *     description: Get detailed information about a notification template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     responses:
+ *       200:
+ *         description: Template details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Template not found
+ *       500:
+ *         description: Failed to get template
+ */
 router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -112,7 +228,34 @@ router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Get template by slug
+/**
+ * @openapi
+ * /templates/slug/{slug}:
+ *   get:
+ *     summary: Get template by slug
+ *     description: Get a notification template by its slug identifier
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Template slug
+ *     responses:
+ *       200:
+ *         description: Template details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Template not found
+ *       500:
+ *         description: Failed to get template
+ */
 router.get('/slug/:slug', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { slug } = req.params;
@@ -136,7 +279,42 @@ router.get('/slug/:slug', requireAuth, async (req: AuthenticatedRequest, res: Re
   }
 });
 
-// Update template
+/**
+ * @openapi
+ * /templates/{id}:
+ *   put:
+ *     summary: Update template
+ *     description: Update a notification template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Template updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Template not found
+ *       500:
+ *         description: Failed to update template
+ */
 router.put('/:id', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -157,7 +335,36 @@ router.put('/:id', requireAuth, requirePermission('notifications:write'), async 
   }
 });
 
-// Delete template
+/**
+ * @openapi
+ * /templates/{id}:
+ *   delete:
+ *     summary: Delete template
+ *     description: Delete a notification template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     responses:
+ *       204:
+ *         description: Template deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Template not found
+ *       500:
+ *         description: Failed to delete template
+ */
 router.delete('/:id', requireAuth, requirePermission('notifications:delete'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -173,7 +380,36 @@ router.delete('/:id', requireAuth, requirePermission('notifications:delete'), as
   }
 });
 
-// Activate template
+/**
+ * @openapi
+ * /templates/{id}/activate:
+ *   post:
+ *     summary: Activate template
+ *     description: Set template status to active
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     responses:
+ *       200:
+ *         description: Template activated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Template not found
+ *       500:
+ *         description: Failed to activate template
+ */
 router.post('/:id/activate', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -193,7 +429,36 @@ router.post('/:id/activate', requireAuth, requirePermission('notifications:write
   }
 });
 
-// Archive template
+/**
+ * @openapi
+ * /templates/{id}/archive:
+ *   post:
+ *     summary: Archive template
+ *     description: Set template status to archived
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     responses:
+ *       200:
+ *         description: Template archived successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Template not found
+ *       500:
+ *         description: Failed to archive template
+ */
 router.post('/:id/archive', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -217,7 +482,39 @@ router.post('/:id/archive', requireAuth, requirePermission('notifications:write'
 // TEMPLATE VERSIONS
 // =====================
 
-// Create new version
+/**
+ * @openapi
+ * /templates/{id}/versions:
+ *   post:
+ *     summary: Create new version
+ *     description: Create a new version of a template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Version created successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Failed to create version
+ */
 router.post('/:id/versions', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -250,7 +547,31 @@ router.post('/:id/versions', requireAuth, requirePermission('notifications:write
   }
 });
 
-// List versions
+/**
+ * @openapi
+ * /templates/{id}/versions:
+ *   get:
+ *     summary: List versions
+ *     description: Get all versions of a template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: List of versions
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to list versions
+ */
 router.get('/:id/versions', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -267,7 +588,38 @@ router.get('/:id/versions', requireAuth, async (req: AuthenticatedRequest, res: 
   }
 });
 
-// Get specific version
+/**
+ * @openapi
+ * /templates/{id}/versions/{versionId}:
+ *   get:
+ *     summary: Get specific version
+ *     description: Get details of a specific template version
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Version details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Version not found
+ *       500:
+ *         description: Failed to get version
+ */
 router.get('/:id/versions/:versionId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
@@ -288,7 +640,40 @@ router.get('/:id/versions/:versionId', requireAuth, async (req: AuthenticatedReq
   }
 });
 
-// Submit version for approval
+/**
+ * @openapi
+ * /templates/{id}/versions/{versionId}/submit:
+ *   post:
+ *     summary: Submit version for approval
+ *     description: Submit a template version for review and approval
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Version submitted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Version not found
+ *       500:
+ *         description: Failed to submit version
+ */
 router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
@@ -310,7 +695,40 @@ router.post('/:id/versions/:versionId/submit', requireAuth, requirePermission('n
   }
 });
 
-// Approve version
+/**
+ * @openapi
+ * /templates/{id}/versions/{versionId}/approve:
+ *   post:
+ *     summary: Approve version
+ *     description: Approve a template version (requires admin permission)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Version approved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: Version not found
+ *       500:
+ *         description: Failed to approve version
+ */
 router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
@@ -332,7 +750,51 @@ router.post('/:id/versions/:versionId/approve', requireAuth, requirePermission('
   }
 });
 
-// Reject version
+/**
+ * @openapi
+ * /templates/{id}/versions/{versionId}/reject:
+ *   post:
+ *     summary: Reject version
+ *     description: Reject a template version with reason (requires admin permission)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rejectionReason
+ *             properties:
+ *               rejectionReason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Version rejected successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: Version not found
+ *       500:
+ *         description: Failed to reject version
+ */
 router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const versionId = parseInt(req.params.versionId!);
@@ -356,7 +818,40 @@ router.post('/:id/versions/:versionId/reject', requireAuth, requirePermission('a
   }
 });
 
-// Activate version
+/**
+ * @openapi
+ * /templates/{id}/versions/{versionId}/activate:
+ *   post:
+ *     summary: Activate version
+ *     description: Make a template version active (deprecates currently active version)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Version activated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: Version not found
+ *       500:
+ *         description: Failed to activate version
+ */
 router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -402,7 +897,53 @@ router.post('/:id/versions/:versionId/activate', requireAuth, requirePermission(
 // LOCALIZATIONS
 // =====================
 
-// Add localization
+/**
+ * @openapi
+ * /templates/{id}/localizations:
+ *   post:
+ *     summary: Add localization
+ *     description: Add a localized version of a template for a specific language
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - locale
+ *             properties:
+ *               locale:
+ *                 type: string
+ *               localizedSubject:
+ *                 type: string
+ *               localizedBodyHtml:
+ *                 type: string
+ *               localizedBodyText:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Localization created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Failed to create localization
+ */
 router.post('/:id/localizations', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -424,7 +965,32 @@ router.post('/:id/localizations', requireAuth, requirePermission('notifications:
   }
 });
 
-// List localizations
+/**
+ * @openapi
+ * /templates/{id}/localizations:
+ *   get:
+ *     summary: List localizations
+ *     description: Get all localized versions of a template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     responses:
+ *       200:
+ *         description: List of localizations
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to list localizations
+ */
 router.get('/:id/localizations', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -440,7 +1006,50 @@ router.get('/:id/localizations', requireAuth, async (req: AuthenticatedRequest, 
   }
 });
 
-// Update localization
+/**
+ * @openapi
+ * /templates/{id}/localizations/{locale}:
+ *   put:
+ *     summary: Update localization
+ *     description: Update a specific localized version of a template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *       - in: path
+ *         name: locale
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Locale code (e.g., en, es, fr)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Localization updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Localization not found
+ *       500:
+ *         description: Failed to update localization
+ */
 router.put('/:id/localizations/:locale', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -464,7 +1073,42 @@ router.put('/:id/localizations/:locale', requireAuth, requirePermission('notific
   }
 });
 
-// Delete localization
+/**
+ * @openapi
+ * /templates/{id}/localizations/{locale}:
+ *   delete:
+ *     summary: Delete localization
+ *     description: Remove a localized version of a template
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *       - in: path
+ *         name: locale
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Locale code (e.g., en, es, fr)
+ *     responses:
+ *       204:
+ *         description: Localization deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Localization not found
+ *       500:
+ *         description: Failed to delete localization
+ */
 router.delete('/:id/localizations/:locale', requireAuth, requirePermission('notifications:delete'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -487,7 +1131,53 @@ router.delete('/:id/localizations/:locale', requireAuth, requirePermission('noti
 // TENANT OVERRIDES
 // =====================
 
-// Add tenant override
+/**
+ * @openapi
+ * /templates/{id}/overrides:
+ *   post:
+ *     summary: Add tenant override
+ *     description: Create a tenant-specific template override (requires admin permission)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - siteId
+ *             properties:
+ *               siteId:
+ *                 type: string
+ *               overrideSubject:
+ *                 type: string
+ *               overrideBodyHtml:
+ *                 type: string
+ *               overrideBodyText:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tenant override created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       500:
+ *         description: Failed to create tenant override
+ */
 router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -509,7 +1199,34 @@ router.post('/:id/overrides', requireAuth, requirePermission('admin'), async (re
   }
 });
 
-// List tenant overrides
+/**
+ * @openapi
+ * /templates/{id}/overrides:
+ *   get:
+ *     summary: List tenant overrides
+ *     description: Get all tenant-specific overrides for a template (requires admin permission)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *     responses:
+ *       200:
+ *         description: List of tenant overrides
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       500:
+ *         description: Failed to list tenant overrides
+ */
 router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -525,7 +1242,50 @@ router.get('/:id/overrides', requireAuth, requirePermission('admin'), async (req
   }
 });
 
-// Update tenant override
+/**
+ * @openapi
+ * /templates/{id}/overrides/{siteId}:
+ *   put:
+ *     summary: Update tenant override
+ *     description: Update a specific tenant override (requires admin permission)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *       - in: path
+ *         name: siteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Site/tenant ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Tenant override updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: Tenant override not found
+ *       500:
+ *         description: Failed to update tenant override
+ */
 router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);
@@ -549,7 +1309,42 @@ router.put('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), as
   }
 });
 
-// Delete tenant override
+/**
+ * @openapi
+ * /templates/{id}/overrides/{siteId}:
+ *   delete:
+ *     summary: Delete tenant override
+ *     description: Remove a tenant-specific override (requires admin permission)
+ *     tags:
+ *       - Templates
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Template ID
+ *       - in: path
+ *         name: siteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Site/tenant ID
+ *     responses:
+ *       204:
+ *         description: Tenant override deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: Tenant override not found
+ *       500:
+ *         description: Failed to delete tenant override
+ */
 router.delete('/:id/overrides/:siteId', requireAuth, requirePermission('admin'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const templateId = parseInt(req.params.id!);

@@ -9,7 +9,52 @@ import {
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
-// Register push device
+/**
+ * @openapi
+ * /devices:
+ *   post:
+ *     summary: Register push device
+ *     description: Register a device token for push notifications (users can only register their own devices)
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - deviceToken
+ *               - platform
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               deviceToken:
+ *                 type: string
+ *               platform:
+ *                 type: string
+ *                 enum: [IOS, ANDROID, WEB]
+ *               deviceName:
+ *                 type: string
+ *               provider:
+ *                 type: string
+ *                 enum: [FCM, APNS, WEB_PUSH]
+ *     responses:
+ *       201:
+ *         description: Device registered
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = registerDeviceSchema.parse(req.body);
@@ -52,7 +97,33 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
   }
 });
 
-// Get user's devices
+/**
+ * @openapi
+ * /devices/user/{userId}:
+ *   get:
+ *     summary: Get user's devices
+ *     description: Get all registered push devices for a user
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of devices
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -75,7 +146,35 @@ router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: 
   }
 });
 
-// Get device by ID
+/**
+ * @openapi
+ * /devices/{id}:
+ *   get:
+ *     summary: Get device by ID
+ *     description: Get a specific push device by ID
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Device details
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -102,7 +201,50 @@ router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Update device
+/**
+ * @openapi
+ * /devices/{id}:
+ *   put:
+ *     summary: Update device
+ *     description: Update device information
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               deviceName:
+ *                 type: string
+ *               platform:
+ *                 type: string
+ *               provider:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Device updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Server error
+ */
 router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -142,7 +284,35 @@ router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Delete device
+/**
+ * @openapi
+ * /devices/{id}:
+ *   delete:
+ *     summary: Delete device
+ *     description: Remove a device registration
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: Device deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Server error
+ */
 router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -173,7 +343,35 @@ router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res: Respon
   }
 });
 
-// Activate device
+/**
+ * @openapi
+ * /devices/{id}/activate:
+ *   post:
+ *     summary: Activate device
+ *     description: Activate a push notification device
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Device activated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Failed to activate device
+ */
 router.post('/:id/activate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -209,7 +407,35 @@ router.post('/:id/activate', requireAuth, async (req: AuthenticatedRequest, res:
   }
 });
 
-// Deactivate device
+/**
+ * @openapi
+ * /devices/{id}/deactivate:
+ *   post:
+ *     summary: Deactivate device
+ *     description: Deactivate a push notification device
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Device deactivated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Failed to deactivate device
+ */
 router.post('/:id/deactivate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -244,7 +470,36 @@ router.post('/:id/deactivate', requireAuth, async (req: AuthenticatedRequest, re
   }
 });
 
-// Delete by token (useful for logout)
+/**
+ * @openapi
+ * /devices/token/{token}:
+ *   delete:
+ *     summary: Delete device by token
+ *     description: Remove a device registration by token (useful for logout)
+ *     tags:
+ *       - Push Devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Device token
+ *     responses:
+ *       204:
+ *         description: Device deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Failed to delete device
+ */
 router.delete('/token/:token', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { token } = req.params;

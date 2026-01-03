@@ -9,7 +9,89 @@ import {
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
 
-// Create/send notification
+/**
+ * @openapi
+ * /notifications:
+ *   post:
+ *     summary: Create/send notification
+ *     description: Create and queue a notification for delivery
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - notificationType
+ *               - channel
+ *             properties:
+ *               siteId:
+ *                 type: string
+ *               userId:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               deviceToken:
+ *                 type: string
+ *               notificationType:
+ *                 type: string
+ *                 enum: [ORDER_CONFIRMATION, SHIPPING_UPDATE, DELIVERY_NOTIFICATION, etc.]
+ *               channel:
+ *                 type: string
+ *                 enum: [EMAIL, SMS, PUSH, IN_APP]
+ *               templateId:
+ *                 type: integer
+ *               subject:
+ *                 type: string
+ *               bodyHtml:
+ *                 type: string
+ *               bodyText:
+ *                 type: string
+ *               bodyJson:
+ *                 type: object
+ *               contextData:
+ *                 type: object
+ *               correlationId:
+ *                 type: string
+ *               orderId:
+ *                 type: string
+ *               paymentId:
+ *                 type: string
+ *               returnId:
+ *                 type: string
+ *               subscriptionId:
+ *                 type: string
+ *               customerId:
+ *                 type: string
+ *               productId:
+ *                 type: string
+ *               cartId:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, NORMAL, HIGH, URGENT]
+ *                 default: NORMAL
+ *               scheduledFor:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Notification created
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createNotificationSchema.parse(req.body);
@@ -92,7 +174,67 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
   }
 });
 
-// List notifications
+/**
+ * @openapi
+ * /notifications:
+ *   get:
+ *     summary: List notifications
+ *     description: List all notifications with filtering and pagination (requires notifications:read permission)
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, QUEUED, SENT, DELIVERED, FAILED, BOUNCED, SPAM_REPORTED]
+ *       - in: query
+ *         name: notificationType
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: channel
+ *         schema:
+ *           type: string
+ *           enum: [EMAIL, SMS, PUSH, IN_APP]
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: correlationId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Notification list with pagination
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - missing permissions
+ *       500:
+ *         description: Server error
+ */
 router.get('/', requireAuth, requirePermission('notifications:read'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const query = notificationQuerySchema.parse(req.query);
@@ -131,7 +273,35 @@ router.get('/', requireAuth, requirePermission('notifications:read'), async (req
   }
 });
 
-// Get notification by ID
+/**
+ * @openapi
+ * /notifications/{id}:
+ *   get:
+ *     summary: Get notification by ID
+ *     description: Retrieve a single notification (users can only view their own)
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification retrieved
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Notification not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -158,7 +328,58 @@ router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Get user's notifications
+/**
+ * @openapi
+ * /notifications/user/{userId}:
+ *   get:
+ *     summary: Get user's notifications
+ *     description: Get all notifications for a specific user (users can only view their own unless admin)
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: notificationType
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: channel
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User notifications with pagination
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
@@ -201,7 +422,37 @@ router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: 
   }
 });
 
-// Retry failed notification
+/**
+ * @openapi
+ * /notifications/{id}/retry:
+ *   post:
+ *     summary: Retry failed notification
+ *     description: Re-queue a failed notification for delivery
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification retried
+ *       400:
+ *         description: Cannot retry (not failed or max retries exceeded)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - missing permissions
+ *       404:
+ *         description: Notification not found
+ *       500:
+ *         description: Server error
+ */
 router.post('/:id/retry', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -247,7 +498,37 @@ router.post('/:id/retry', requireAuth, requirePermission('notifications:write'),
   }
 });
 
-// Cancel pending notification
+/**
+ * @openapi
+ * /notifications/{id}/cancel:
+ *   post:
+ *     summary: Cancel pending notification
+ *     description: Cancel a pending or queued notification
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Notification cancelled
+ *       400:
+ *         description: Cannot cancel (not pending or queued)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - missing permissions
+ *       404:
+ *         description: Notification not found
+ *       500:
+ *         description: Server error
+ */
 router.post('/:id/cancel', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -283,7 +564,53 @@ router.post('/:id/cancel', requireAuth, requirePermission('notifications:write')
   }
 });
 
-// Update notification status (internal use for workers)
+/**
+ * @openapi
+ * /notifications/{id}/status:
+ *   patch:
+ *     summary: Update notification status
+ *     description: Update notification delivery status (internal use for workers)
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [SENT, DELIVERED, FAILED]
+ *               errorCode:
+ *                 type: string
+ *               errorMessage:
+ *                 type: string
+ *               providerMessageId:
+ *                 type: string
+ *               provider:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Status updated
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires system permission
+ *       500:
+ *         description: Server error
+ */
 router.patch('/:id/status', requireAuth, requirePermission('system'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
@@ -319,7 +646,43 @@ router.patch('/:id/status', requireAuth, requirePermission('system'), async (req
   }
 });
 
-// Bulk send notifications
+/**
+ * @openapi
+ * /notifications/bulk:
+ *   post:
+ *     summary: Bulk send notifications
+ *     description: Create and queue multiple notifications in a single request (max 100)
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - notifications
+ *             properties:
+ *               notifications:
+ *                 type: array
+ *                 maxItems: 100
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       201:
+ *         description: Notifications created
+ *       400:
+ *         description: Validation error or too many notifications
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - missing permissions
+ *       500:
+ *         description: Server error
+ */
 router.post('/bulk', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { notifications } = req.body;
