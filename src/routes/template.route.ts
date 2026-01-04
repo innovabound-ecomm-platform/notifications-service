@@ -12,6 +12,10 @@ import {
   createTenantOverrideSchema,
   updateTenantOverrideSchema,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  templateWhere,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();

@@ -5,6 +5,10 @@ import {
   createInAppNotificationSchema,
   inAppQuerySchema,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  inAppNotificationWhere,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();

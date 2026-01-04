@@ -9,8 +9,12 @@ export interface AuthenticatedRequest extends Request {
     roles?: string[];
     permissions?: string[];
     sessionId?: string;
+    siteId?: string;
+    siteSlug?: string;
   };
   userId?: string;
+  siteId?: string;
+  siteSlug?: string;
 }
 
 // JWT Configuration
@@ -38,6 +42,8 @@ interface TokenPayload extends JWTPayload {
   roles: string[];
   permissions: string[];
   sessionId?: string;
+  siteId?: string;
+  siteSlug?: string;
 }
 
 /**
@@ -49,6 +55,8 @@ async function verifyAccessToken(token: string): Promise<{
   roles: string[];
   permissions: string[];
   sessionId?: string;
+  siteId?: string;
+  siteSlug?: string;
 } | null> {
   try {
     const { payload } = await jwtVerify<TokenPayload>(token, getJWKS(), {
@@ -62,6 +70,8 @@ async function verifyAccessToken(token: string): Promise<{
       roles: payload.roles || [],
       permissions: payload.permissions || [],
       sessionId: payload.sessionId,
+      siteId: payload.siteId,
+      siteSlug: payload.siteSlug,
     };
   } catch (error) {
     if (error instanceof errors.JWTExpired) {
@@ -82,6 +92,10 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction
 ) => {
+  // Extract tenant context from headers
+  const siteId = req.headers["x-tenant-id"] as string;
+  const siteSlug = req.headers["x-tenant-slug"] as string;
+
   // Method 1: Header-based auth (from API gateway)
   const userId = req.headers["x-user-id"] as string;
   const userEmail = req.headers["x-user-email"] as string;
@@ -93,8 +107,12 @@ export const requireAuth = async (
       userId: userId,
       email: userEmail,
       roles: userRoles ? userRoles.split(",") : [],
+      siteId: siteId || undefined,
+      siteSlug: siteSlug || undefined,
     };
     req.userId = userId;
+    req.siteId = siteId || undefined;
+    req.siteSlug = siteSlug || undefined;
     return next();
   }
 
@@ -110,8 +128,12 @@ export const requireAuth = async (
         roles: payload.roles,
         permissions: payload.permissions,
         sessionId: payload.sessionId,
+        siteId: payload.siteId || siteId || undefined,
+        siteSlug: payload.siteSlug || siteSlug || undefined,
       };
       req.userId = payload.sub;
+      req.siteId = payload.siteId || siteId || undefined;
+      req.siteSlug = payload.siteSlug || siteSlug || undefined;
       return next();
     }
   }
@@ -129,8 +151,12 @@ export const requireAuth = async (
         roles: payload.roles,
         permissions: payload.permissions,
         sessionId: payload.sessionId,
+        siteId: payload.siteId || siteId || undefined,
+        siteSlug: payload.siteSlug || siteSlug || undefined,
       };
       req.userId = payload.sub;
+      req.siteId = payload.siteId || siteId || undefined;
+      req.siteSlug = payload.siteSlug || siteSlug || undefined;
       return next();
     }
   }
@@ -204,6 +230,10 @@ export const optionalAuth = async (
   res: Response,
   next: NextFunction
 ) => {
+  // Extract tenant context from headers
+  const siteId = req.headers["x-tenant-id"] as string;
+  const siteSlug = req.headers["x-tenant-slug"] as string;
+
   // Try header-based auth
   const userId = req.headers["x-user-id"] as string;
   const userEmail = req.headers["x-user-email"] as string;
@@ -215,8 +245,12 @@ export const optionalAuth = async (
       userId: userId,
       email: userEmail,
       roles: userRoles ? userRoles.split(",") : [],
+      siteId: siteId || undefined,
+      siteSlug: siteSlug || undefined,
     };
     req.userId = userId;
+    req.siteId = siteId || undefined;
+    req.siteSlug = siteSlug || undefined;
     return next();
   }
 
@@ -232,8 +266,12 @@ export const optionalAuth = async (
         roles: payload.roles,
         permissions: payload.permissions,
         sessionId: payload.sessionId,
+        siteId: payload.siteId || siteId || undefined,
+        siteSlug: payload.siteSlug || siteSlug || undefined,
       };
       req.userId = payload.sub;
+      req.siteId = payload.siteId || siteId || undefined;
+      req.siteSlug = payload.siteSlug || siteSlug || undefined;
       return next();
     }
   }
@@ -251,10 +289,37 @@ export const optionalAuth = async (
         roles: payload.roles,
         permissions: payload.permissions,
         sessionId: payload.sessionId,
+        siteId: payload.siteId || siteId || undefined,
+        siteSlug: payload.siteSlug || siteSlug || undefined,
       };
       req.userId = payload.sub;
+      req.siteId = payload.siteId || siteId || undefined;
+      req.siteSlug = payload.siteSlug || siteSlug || undefined;
     }
   }
 
+  // Set tenant context even without auth
+  if (!req.siteId && siteId) {
+    req.siteId = siteId;
+    req.siteSlug = siteSlug || undefined;
+  }
+
+  next();
+};
+
+/**
+ * Middleware to require tenant context
+ */
+export const requireTenant = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.siteId) {
+    return res.status(400).json({ 
+      error: "Tenant context required",
+      message: "siteId must be provided via JWT or x-tenant-id header"
+    });
+  }
   next();
 };

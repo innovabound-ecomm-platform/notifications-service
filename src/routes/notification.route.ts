@@ -5,6 +5,12 @@ import {
   createNotificationSchema,
   notificationQuerySchema,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  notificationWhere,
+  withSiteId,
+  validateTenantOwnership,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
@@ -95,6 +101,7 @@ const prisma = getNotificationsPrisma();
 router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = createNotificationSchema.parse(req.body);
+    const siteId = getSiteId(req);
 
     // If template is specified, render the template
     let renderedContent: {
@@ -131,7 +138,7 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
 
     const notification = await prisma.notification.create({
       data: {
-        siteId: data.siteId,
+        siteId: data.siteId || siteId,
         userId: data.userId,
         email: data.email,
         phone: data.phone,
@@ -239,14 +246,17 @@ router.get('/', requireAuth, requirePermission('notifications:read'), async (req
   try {
     const query = notificationQuerySchema.parse(req.query);
     const { page, limit, status, notificationType, channel, userId, orderId, correlationId } = query;
+    const siteId = getSiteId(req);
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (notificationType) where.notificationType = notificationType;
-    if (channel) where.channel = channel;
-    if (userId) where.userId = userId;
-    if (orderId) where.orderId = orderId;
-    if (correlationId) where.correlationId = correlationId;
+    const additionalWhere: Record<string, unknown> = {};
+    if (status) additionalWhere.status = status;
+    if (notificationType) additionalWhere.notificationType = notificationType;
+    if (channel) additionalWhere.channel = channel;
+    if (userId) additionalWhere.userId = userId;
+    if (orderId) additionalWhere.orderId = orderId;
+    if (correlationId) additionalWhere.correlationId = correlationId;
+
+    const where = notificationWhere(siteId, additionalWhere, { strict: false });
 
     const [notifications, total] = await Promise.all([
       prisma.notification.findMany({
@@ -305,9 +315,10 @@ router.get('/', requireAuth, requirePermission('notifications:read'), async (req
 router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
+    const siteId = getSiteId(req);
 
-    const notification = await prisma.notification.findUnique({
-      where: { id },
+    const notification = await prisma.notification.findFirst({
+      where: notificationWhere(siteId, { id }, { strict: false }),
     });
 
     if (!notification) {
@@ -385,6 +396,7 @@ router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: 
     const { userId } = req.params;
     const query = notificationQuerySchema.parse(req.query);
     const { page, limit, status, notificationType, channel } = query;
+    const siteId = getSiteId(req);
 
     // Users can only view their own notifications (unless admin)
     if (userId !== req.user!.userId && !isAdmin(req.user!.roles)) {
@@ -392,10 +404,12 @@ router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: 
       return;
     }
 
-    const where: Record<string, unknown> = { userId };
-    if (status) where.status = status;
-    if (notificationType) where.notificationType = notificationType;
-    if (channel) where.channel = channel;
+    const additionalWhere: Record<string, unknown> = { userId };
+    if (status) additionalWhere.status = status;
+    if (notificationType) additionalWhere.notificationType = notificationType;
+    if (channel) additionalWhere.channel = channel;
+
+    const where = notificationWhere(siteId, additionalWhere, { strict: false });
 
     const [notifications, total] = await Promise.all([
       prisma.notification.findMany({
@@ -456,9 +470,10 @@ router.get('/user/:userId', requireAuth, async (req: AuthenticatedRequest, res: 
 router.post('/:id/retry', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
+    const siteId = getSiteId(req);
 
-    const notification = await prisma.notification.findUnique({
-      where: { id },
+    const notification = await prisma.notification.findFirst({
+      where: notificationWhere(siteId, { id }, { strict: false }),
     });
 
     if (!notification) {
@@ -532,9 +547,10 @@ router.post('/:id/retry', requireAuth, requirePermission('notifications:write'),
 router.post('/:id/cancel', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id!);
+    const siteId = getSiteId(req);
 
-    const notification = await prisma.notification.findUnique({
-      where: { id },
+    const notification = await prisma.notification.findFirst({
+      where: notificationWhere(siteId, { id }, { strict: false }),
     });
 
     if (!notification) {
@@ -686,6 +702,7 @@ router.patch('/:id/status', requireAuth, requirePermission('system'), async (req
 router.post('/bulk', requireAuth, requirePermission('notifications:write'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { notifications } = req.body;
+    const siteId = getSiteId(req);
 
     if (!Array.isArray(notifications) || notifications.length === 0) {
       res.status(400).json({ error: 'Notifications array is required' });
@@ -702,6 +719,7 @@ router.post('/bulk', requireAuth, requirePermission('notifications:write'), asyn
     const created = await prisma.notification.createMany({
       data: validatedNotifications.map(n => ({
         ...n,
+        siteId: n.siteId || siteId,
         status: n.scheduledFor ? 'PENDING' : 'QUEUED',
         createdBy: req.user!.userId,
         updatedBy: req.user!.userId,

@@ -5,6 +5,10 @@ import {
   registerDeviceSchema,
   updateDeviceSchema,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  pushDeviceWhere,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();

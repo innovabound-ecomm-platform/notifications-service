@@ -6,6 +6,10 @@ import {
   updateSinglePreferenceSchema,
   NotificationTypeEnum,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  notificationPreferenceWhere,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();

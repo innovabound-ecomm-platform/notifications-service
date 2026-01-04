@@ -5,6 +5,11 @@ import {
   createEmailEventSchema,
   emailEventQuerySchema,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  emailEventWhere,
+  notificationWhere,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
@@ -89,10 +94,13 @@ router.get('/', requireAuth, requirePermission('notifications:read'), async (req
   try {
     const query = emailEventQuerySchema.parse(req.query);
     const { page, limit, email, eventType } = query;
+    const siteId = getSiteId(req);
 
-    const where: Record<string, unknown> = {};
-    if (email) where.email = email;
-    if (eventType) where.eventType = eventType;
+    const additionalWhere: Record<string, unknown> = {};
+    if (email) additionalWhere.email = email;
+    if (eventType) additionalWhere.eventType = eventType;
+
+    const where = emailEventWhere(siteId, additionalWhere, { strict: false });
 
     const [events, total] = await Promise.all([
       prisma.emailEvent.findMany({
@@ -123,9 +131,12 @@ router.get('/', requireAuth, requirePermission('notifications:read'), async (req
 router.get('/message/:messageId', requireAuth, requirePermission('notifications:read'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { messageId } = req.params;
+    const siteId = getSiteId(req);
+
+    const where = emailEventWhere(siteId, { messageId }, { strict: false });
 
     const events = await prisma.emailEvent.findMany({
-      where: { messageId },
+      where,
       orderBy: { occurredAt: 'asc' },
     });
 
@@ -140,9 +151,10 @@ router.get('/message/:messageId', requireAuth, requirePermission('notifications:
 router.get('/notification/:notificationId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const notificationId = parseInt(req.params.notificationId!);
+    const siteId = getSiteId(req);
 
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId },
+    const notification = await prisma.notification.findFirst({
+      where: notificationWhere(siteId, { id: notificationId }, { strict: false }),
     });
 
     if (!notification) {
@@ -156,8 +168,10 @@ router.get('/notification/:notificationId', requireAuth, async (req: Authenticat
       return;
     }
 
+    const eventsWhere = emailEventWhere(siteId, { notificationId }, { strict: false });
+
     const events = await prisma.emailEvent.findMany({
-      where: { notificationId },
+      where: eventsWhere,
       orderBy: { occurredAt: 'asc' },
     });
 

@@ -8,6 +8,10 @@ import {
   webhookQuerySchema,
   webhookDeliveryQuerySchema,
 } from '../schemas/notification.schema.js';
+import {
+  getSiteId,
+  webhookEndpointWhere,
+} from '../utils/tenant.utils.js';
 
 const router: Router = Router();
 const prisma = getNotificationsPrisma();
